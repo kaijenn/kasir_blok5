@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 Use App\Models\M_siapake;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class Home extends BaseController
 {
@@ -45,7 +46,127 @@ class Home extends BaseController
 	echo view('login');
 	}
 
+public function barang(){
 
+    $model= new M_siapake();
+    $data['oke']= $model->tampil('barang');
+
+    $where = array('id_setting' => '1');
+		$data['yogi'] = $model->getWhere1('setting', $where)->getRow();
+        $id_user = session()->get('id');
+        $activityLog = [
+            'id_user' => $id_user,
+            'menu' => 'Masuk ke Barang',
+            'time' => date('Y-m-d H:i:s')
+        ];
+        $model->logActivity($activityLog);
+	echo view('header', $data);
+	echo view('menu');
+    echo view('barang', $data);
+    echo view('footer');
+
+}
+
+public function t_barang(){
+
+    $model= new M_siapake();
+    $where = array('id_setting' => '1');
+		$data['yogi'] = $model->getWhere1('setting', $where)->getRow();
+        $id_user = session()->get('id');
+        $activityLog = [
+            'id_user' => $id_user,
+            'menu' => 'Masuk ke Barang',
+            'time' => date('Y-m-d H:i:s')
+        ];
+        $model->logActivity($activityLog);
+	echo view('header', $data);
+	echo view('menu');
+    echo view('t_barang', $data);
+    echo view('footer');
+
+}
+
+public function aksi_t_barang()
+{
+    if(session()->get('id') > 0){
+        $nama_barang = $this->request->getPost('nama_barang');
+        $kode_barang = $this->request->getPost('kode_barang');
+        $harga_barang = $this->request->getPost('harga_barang');
+        $jumlah = $this->request->getPost('jumlah');
+
+        // Format data yang akan disimpan
+        $yoga = array(
+            'nama_barang' => $nama_barang,
+            'kode_barang' => $kode_barang,
+            'harga_barang' => $harga_barang,
+            'jumlah' => $jumlah,
+        );
+
+        // Simpan data barang
+        $model = new M_siapake;
+        $model->tambah('barang', $yoga);
+
+        // Generate Barcode
+        $barcodeGenerator = new BarcodeGeneratorPNG();
+        $barcodeData = $barcodeGenerator->getBarcode($kode_barang, $barcodeGenerator::TYPE_CODE_128);
+
+        // File path untuk menyimpan barcode
+        $barcodeFile = FCPATH . 'uploads/' . $kode_barang . '.png';
+
+        // Tambahkan teks kode barang di bawah barcode menggunakan GD library
+        $this->addTextToBarcode($barcodeData, $kode_barang, $barcodeFile);
+
+        // Setelah simpan barcode, redirect ke halaman daftar barang
+        return redirect()->to('home/barang');
+    } else {
+        return redirect()->to('home/login');
+    }
+}
+
+/**
+ * Tambahkan teks (kode barang) di bawah barcode
+ * 
+ * @param string $barcodeData Data gambar barcode
+ * @param string $kodeBarang Kode barang untuk ditambahkan
+ * @param string $filePath Lokasi untuk menyimpan barcode
+ */
+private function addTextToBarcode($barcodeData, $kodeBarang, $filePath)
+{
+    // Load barcode sebagai gambar dari data PNG
+    $barcodeImage = imagecreatefromstring($barcodeData);
+
+    // Dapatkan ukuran barcode
+    $barcodeWidth = imagesx($barcodeImage);
+    $barcodeHeight = imagesy($barcodeImage);
+
+    // Tentukan ukuran kanvas baru untuk menambahkan teks
+    $canvasHeight = $barcodeHeight + 20; // Tambahkan ruang untuk teks (20px)
+    $canvas = imagecreatetruecolor($barcodeWidth, $canvasHeight);
+
+    // Warna latar belakang putih
+    $white = imagecolorallocate($canvas, 255, 255, 255);
+    imagefill($canvas, 0, 0, $white);
+
+    // Salin barcode ke kanvas
+    imagecopy($canvas, $barcodeImage, 0, 0, 0, 0, $barcodeWidth, $barcodeHeight);
+
+    // Tambahkan teks (kode barang) di bawah barcode
+    $black = imagecolorallocate($canvas, 0, 0, 0);
+    $fontPath = FCPATH . 'fonts/arial.ttf';
+    $fontSize = 10; // Ukuran font
+    $textX = ($barcodeWidth / 2) - (strlen($kodeBarang) * $fontSize / 4); // Pusatkan teks
+    $textY = $barcodeHeight + 15; // Posisi di bawah barcode
+
+    // Tambahkan teks ke kanvas
+    imagettftext($canvas, $fontSize, 0, $textX, $textY, $black, $fontPath, $kodeBarang);
+
+    // Simpan hasil sebagai file PNG
+    imagepng($canvas, $filePath);
+
+    // Bersihkan memori
+    imagedestroy($canvas);
+    imagedestroy($barcodeImage);
+}
 
 
 public function aksi_login()

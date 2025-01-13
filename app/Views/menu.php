@@ -49,16 +49,16 @@
                             </ul>
                         </li>
                         <!-- Menu -->
-                        <li class="sidebar-item <?= ($currentUri == 'home/dokumen') ? 'active' : '' ?>">
-                            <a href="<?= base_url('home/dokumen') ?>" class='sidebar-link'>
+                        <li class="sidebar-item <?= ($currentUri == 'home/barang') ? 'active' : '' ?>">
+                            <a href="<?= base_url('home/barang') ?>" class='sidebar-link'>
                                 <i class="fa fa-folder"></i>
-                                <span>Dokumen</span>
+                                <span>Barang</span>
                             </a>
                         </li>
                         <li class="sidebar-item <?= ($currentUri == 'home/user') ? 'active' : '' ?>">
                             <a href="<?= base_url('home/user') ?>" class='sidebar-link'>
                                 <i class="fa fa-user"></i>
-                                <span>User</span>
+                                <span>Kasir</span>
                             </a>
                         </li>
 
