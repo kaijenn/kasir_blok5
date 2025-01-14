@@ -89,44 +89,130 @@ public function t_barang(){
 public function aksi_t_barang()
 {
     if (session()->get('id') > 0) {
+        // Ambil data input
         $nama_barang = $this->request->getPost('nama_barang');
         $kode_barang = $this->request->getPost('kode_barang');
         $harga_barang = $this->request->getPost('harga_barang');
-        $stok = $this->request->getPost('stok'); // Menggunakan 'stok'
+        $stok = $this->request->getPost('stok');
 
-        // Format data yang akan disimpan
-        $yoga = array(
+        // Validasi input (basic)
+        if (empty($nama_barang) || empty($kode_barang) || empty($harga_barang) || empty($stok)) {
+            return redirect()->back()->with('error', 'Semua field wajib diisi.');
+        }
+
+        // Format data untuk disimpan
+        $data = [
             'nama_barang' => $nama_barang,
             'kode_barang' => $kode_barang,
             'harga_barang' => $harga_barang,
             'stok' => $stok,
-        );
+        ];
 
+        // Simpan data ke database
+        $model = new M_siapake();
         // Simpan data barang
-        $model = new M_siapake;
-        $model->tambah('barang', $yoga);
+$model->tambah('barang', $data);
 
-        // Gabungkan data untuk dimasukkan ke barcode
-        $dataToEncode = $nama_barang . '|' . $kode_barang . '|' . $harga_barang;
+// Data yang akan diencode menjadi barcode hanya kode_barang
+$dataToEncode = $kode_barang;  // Hanya kode_barang yang dimasukkan
 
-        // Generate Barcode
-        $barcodeGenerator = new BarcodeGeneratorPNG();
-        $barcodeData = $barcodeGenerator->getBarcode($dataToEncode, $barcodeGenerator::TYPE_CODE_128);
+// Buat barcode
+$barcodeGenerator = new \Picqer\Barcode\BarcodeGeneratorPNG();
+$barcodeData = $barcodeGenerator->getBarcode($dataToEncode, $barcodeGenerator::TYPE_CODE_128);
 
-        // File path untuk menyimpan barcode
-        $barcodeFile = FCPATH . 'uploads/' . $kode_barang . '.png';
+// Path untuk menyimpan barcode
+$barcodeFile = FCPATH . 'uploads/' . $kode_barang . '.png';
 
-        // Tambahkan teks hanya untuk kode_barang
-        $this->addTextToBarcode($barcodeData, $kode_barang, $barcodeFile);
+// Tambahkan teks pada barcode
+$this->addTextToBarcode($barcodeData, $kode_barang, $barcodeFile);
 
-        // Setelah simpan barcode, redirect ke halaman daftar barang
-        return redirect()->to('home/barang');
+// Redirect ke halaman daftar barang
+return redirect()->to('home/barang')->with('success', 'Data barang berhasil ditambahkan.');
+
     } else {
         return redirect()->to('home/login');
     }
 }
+public function cariBarangDariBarcode()
+{
+    if ($this->request->getPost('barcode')) {
+        $kode_barang = $this->request->getPost('barcode'); // Nilai barcode yang dipindai
 
+        // Ambil data barang dari database berdasarkan kode_barang
+        $model = new M_siapake();
+        $barang = $model->getWhere('barang', ['kode_barang' => $kode_barang]);
 
+        if ($barang) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => [
+                    'nama_barang' => $barang->nama_barang,
+                    'harga_barang' => $barang->harga_barang,
+                    'stok' => $barang->stok,
+                ],
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Barang tidak ditemukan!',
+            ]);
+        }
+    }
+    return $this->response->setJSON([
+        'status' => 'error',
+        'message' => 'Barcode tidak valid!',
+    ]);
+}
+
+private function addTextToBarcode($barcodeData, $kodeBarang, $filePath)
+{
+    // Load barcode sebagai gambar
+    $barcodeImage = imagecreatefromstring($barcodeData);
+    if (!$barcodeImage) {
+        throw new \Exception("Gagal membuat gambar barcode dari data.");
+    }
+
+    // Dapatkan ukuran barcode
+    $barcodeWidth = imagesx($barcodeImage);
+    $barcodeHeight = imagesy($barcodeImage);
+
+    // Periksa dimensi
+    if ($barcodeWidth <= 0 || $barcodeHeight <= 0) {
+        throw new \Exception("Dimensi barcode tidak valid.");
+    }
+
+    // Tentukan ukuran kanvas baru
+    $canvasHeight = $barcodeHeight + 20; // Tambahkan ruang untuk teks
+    $canvas = imagecreatetruecolor($barcodeWidth, $canvasHeight);
+
+    // Atur warna latar belakang putih
+    $white = imagecolorallocate($canvas, 255, 255, 255);
+    imagefill($canvas, 0, 0, $white);
+
+    // Salin barcode ke kanvas
+    imagecopy($canvas, $barcodeImage, 0, 0, 0, 0, $barcodeWidth, $barcodeHeight);
+
+    // Tambahkan teks kode barang
+    $black = imagecolorallocate($canvas, 0, 0, 0);
+    $fontPath = FCPATH . 'fonts/arial.ttf'; // Lokasi file font
+    if (!file_exists($fontPath)) {
+        throw new \Exception("File font tidak ditemukan di {$fontPath}");
+    }
+
+    $fontSize = 10; // Ukuran font
+    $textX = ($barcodeWidth - (strlen($kodeBarang) * $fontSize / 2)) / 2; // Pusatkan teks
+    $textY = $barcodeHeight + 15; // Posisi teks
+
+    // Tambahkan teks ke gambar
+    imagettftext($canvas, $fontSize, 0, $textX, $textY, $black, $fontPath, $kodeBarang);
+
+    // Simpan hasil sebagai file PNG
+    imagepng($canvas, $filePath);
+
+    // Bersihkan memori
+    imagedestroy($canvas);
+    imagedestroy($barcodeImage);
+}
 
 
 public function e_barang($id_barang){
@@ -153,50 +239,6 @@ public function e_barang($id_barang){
 
 }
 
-/**
- * Tambahkan teks (kode barang) di bawah barcode
- * 
- * @param string $barcodeData Data gambar barcode
- * @param string $kodeBarang Kode barang untuk ditambahkan
- * @param string $filePath Lokasi untuk menyimpan barcode
- */
-private function addTextToBarcode($barcodeData, $kodeBarang, $filePath)
-{
-    // Load barcode sebagai gambar dari data PNG
-    $barcodeImage = imagecreatefromstring($barcodeData);
-
-    // Dapatkan ukuran barcode
-    $barcodeWidth = imagesx($barcodeImage);
-    $barcodeHeight = imagesy($barcodeImage);
-
-    // Tentukan ukuran kanvas baru untuk menambahkan teks
-    $canvasHeight = $barcodeHeight + 20; // Tambahkan ruang untuk teks (20px)
-    $canvas = imagecreatetruecolor($barcodeWidth, $canvasHeight);
-
-    // Warna latar belakang putih
-    $white = imagecolorallocate($canvas, 255, 255, 255);
-    imagefill($canvas, 0, 0, $white);
-
-    // Salin barcode ke kanvas
-    imagecopy($canvas, $barcodeImage, 0, 0, 0, 0, $barcodeWidth, $barcodeHeight);
-
-    // Tambahkan teks (hanya kode_barang) di bawah barcode
-    $black = imagecolorallocate($canvas, 0, 0, 0);
-    $fontPath = FCPATH . 'fonts/arial.ttf'; // Pastikan file font tersedia
-    $fontSize = 10; // Ukuran font
-    $textX = ($barcodeWidth / 2) - (strlen($kodeBarang) * $fontSize / 4); // Pusatkan teks
-    $textY = $barcodeHeight + 15; // Posisi di bawah barcode
-
-    // Tambahkan teks ke kanvas
-    imagettftext($canvas, $fontSize, 0, $textX, $textY, $black, $fontPath, $kodeBarang);
-
-    // Simpan hasil sebagai file PNG
-    imagepng($canvas, $filePath);
-
-    // Bersihkan memori
-    imagedestroy($canvas);
-    imagedestroy($barcodeImage);
-}
 
 
 public function barcode()
@@ -220,6 +262,27 @@ public function barcode()
     echo view('footer');
 }
 
+
+public function kasir(){
+
+    $model= new M_siapake();
+    $data['oke']= $model->tampil('barang');
+
+    $where = array('id_setting' => '1');
+		$data['yogi'] = $model->getWhere1('setting', $where)->getRow();
+        $id_user = session()->get('id');
+        $activityLog = [
+            'id_user' => $id_user,
+            'menu' => 'Masuk ke Kasir',
+            'time' => date('Y-m-d H:i:s')
+        ];
+        $model->logActivity($activityLog);
+	echo view('header', $data);
+	echo view('menu');
+    echo view('kasir', $data);
+    echo view('footer');
+
+}
 
 
 public function aksi_login()

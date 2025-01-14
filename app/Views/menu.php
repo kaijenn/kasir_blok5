@@ -55,8 +55,8 @@
                                 <span>Barang</span>
                             </a>
                         </li>
-                        <li class="sidebar-item <?= ($currentUri == 'home/user') ? 'active' : '' ?>">
-                            <a href="<?= base_url('home/user') ?>" class='sidebar-link'>
+                        <li class="sidebar-item <?= ($currentUri == 'home/kasir') ? 'active' : '' ?>">
+                            <a href="<?= base_url('home/kasir') ?>" class='sidebar-link'>
                                 <i class="fa fa-user"></i>
                                 <span>Kasir</span>
                             </a>
