@@ -61,6 +61,12 @@
                                 <span>Kasir</span>
                             </a>
                         </li>
+                        <li class="sidebar-item <?= ($currentUri == 'home/barcode') ? 'active' : '' ?>">
+                            <a href="<?= base_url('home/barcode') ?>" class='sidebar-link'>
+                                <i class="fa fa-user"></i>
+                                <span>Barcode</span>
+                            </a>
+                        </li>
 
                         <!-- Pemesanan -->
 

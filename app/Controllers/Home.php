@@ -75,7 +75,7 @@ public function t_barang(){
         $id_user = session()->get('id');
         $activityLog = [
             'id_user' => $id_user,
-            'menu' => 'Masuk ke Barang',
+            'menu' => 'Masuk ke Tambah Barang',
             'time' => date('Y-m-d H:i:s')
         ];
         $model->logActivity($activityLog);
@@ -88,32 +88,35 @@ public function t_barang(){
 
 public function aksi_t_barang()
 {
-    if(session()->get('id') > 0){
+    if (session()->get('id') > 0) {
         $nama_barang = $this->request->getPost('nama_barang');
         $kode_barang = $this->request->getPost('kode_barang');
         $harga_barang = $this->request->getPost('harga_barang');
-        $jumlah = $this->request->getPost('jumlah');
+        $stok = $this->request->getPost('stok'); // Menggunakan 'stok'
 
         // Format data yang akan disimpan
         $yoga = array(
             'nama_barang' => $nama_barang,
             'kode_barang' => $kode_barang,
             'harga_barang' => $harga_barang,
-            'jumlah' => $jumlah,
+            'stok' => $stok,
         );
 
         // Simpan data barang
         $model = new M_siapake;
         $model->tambah('barang', $yoga);
 
+        // Gabungkan data untuk dimasukkan ke barcode
+        $dataToEncode = $nama_barang . '|' . $kode_barang . '|' . $harga_barang;
+
         // Generate Barcode
         $barcodeGenerator = new BarcodeGeneratorPNG();
-        $barcodeData = $barcodeGenerator->getBarcode($kode_barang, $barcodeGenerator::TYPE_CODE_128);
+        $barcodeData = $barcodeGenerator->getBarcode($dataToEncode, $barcodeGenerator::TYPE_CODE_128);
 
         // File path untuk menyimpan barcode
         $barcodeFile = FCPATH . 'uploads/' . $kode_barang . '.png';
 
-        // Tambahkan teks kode barang di bawah barcode menggunakan GD library
+        // Tambahkan teks hanya untuk kode_barang
         $this->addTextToBarcode($barcodeData, $kode_barang, $barcodeFile);
 
         // Setelah simpan barcode, redirect ke halaman daftar barang
@@ -121,6 +124,33 @@ public function aksi_t_barang()
     } else {
         return redirect()->to('home/login');
     }
+}
+
+
+
+
+public function e_barang($id_barang){
+
+    $model= new M_siapake();
+
+    $wherebarang = array('id_barang' => $id_barang);
+    $data['oke'] = $model->getWhere1('barang', $wherebarang)->getRow();
+
+
+    $where = array('id_setting' => '1');
+		$data['yogi'] = $model->getWhere1('setting', $where)->getRow();
+        $id_user = session()->get('id');
+        $activityLog = [
+            'id_user' => $id_user,
+            'menu' => 'Masuk ke Edit Barang',
+            'time' => date('Y-m-d H:i:s')
+        ];
+        $model->logActivity($activityLog);
+	echo view('header', $data);
+	echo view('menu');
+    echo view('e_barang', $data);
+    echo view('footer');
+
 }
 
 /**
@@ -150,9 +180,9 @@ private function addTextToBarcode($barcodeData, $kodeBarang, $filePath)
     // Salin barcode ke kanvas
     imagecopy($canvas, $barcodeImage, 0, 0, 0, 0, $barcodeWidth, $barcodeHeight);
 
-    // Tambahkan teks (kode barang) di bawah barcode
+    // Tambahkan teks (hanya kode_barang) di bawah barcode
     $black = imagecolorallocate($canvas, 0, 0, 0);
-    $fontPath = FCPATH . 'fonts/arial.ttf';
+    $fontPath = FCPATH . 'fonts/arial.ttf'; // Pastikan file font tersedia
     $fontSize = 10; // Ukuran font
     $textX = ($barcodeWidth / 2) - (strlen($kodeBarang) * $fontSize / 4); // Pusatkan teks
     $textY = $barcodeHeight + 15; // Posisi di bawah barcode
@@ -167,6 +197,29 @@ private function addTextToBarcode($barcodeData, $kodeBarang, $filePath)
     imagedestroy($canvas);
     imagedestroy($barcodeImage);
 }
+
+
+public function barcode()
+{
+    $model = new M_siapake();
+
+    $where = array('id_setting' => '1');
+    $data['yogi'] = $model->getWhere1('setting', $where)->getRow();
+    
+    $id_user = session()->get('id');
+    $activityLog = [
+        'id_user' => $id_user,
+        'menu' => 'Masuk ke Barcode',
+        'time' => date('Y-m-d H:i:s')
+    ];
+    $model->logActivity($activityLog);
+
+    echo view('header', $data);
+    echo view('menu');
+    echo view('barcode'); // Panggil view barcode
+    echo view('footer');
+}
+
 
 
 public function aksi_login()

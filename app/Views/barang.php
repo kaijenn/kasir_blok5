@@ -23,7 +23,7 @@
                                         <th>Nama Barang</th>
                                         <th>Kode Barang</th>
                                         <th>Harga Barang</th>
-                                        <th>Jumlah</th>
+                                        <th>Stok</th>
                                         <th>Barcode</th> <!-- New column for barcode -->
                                         <th>Action</th>
                                     </tr>
@@ -38,7 +38,7 @@
                                             <td><?= ($okei->nama_barang) ?></td>
                                             <td><?= ($okei->kode_barang) ?></td>
                                             <td><?= ($okei->harga_barang) ?></td>
-                                            <td><?= ($okei->jumlah) ?></td>
+                                            <td><?= ($okei->stok) ?></td>
                                             <td>
     <!-- Display Barcode Image with Popup -->
     <?php if (file_exists(FCPATH . 'uploads/' . $okei->kode_barang . '.png')): ?>
@@ -55,7 +55,7 @@
                                                     <i class="fe fe-edit"></i> Edit
                                                 </button>
                                                 <a href="<?= base_url('home/hapus_barang/'.$okei->id_barang) ?>">
-                                                    <button class="btn btn-danger">Delete</button>
+                                                    <button class="btn btn-secondary">Delete</button>
                                                 </a>
                                             </td>
                                         </tr>
