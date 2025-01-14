@@ -67,6 +67,12 @@
                                 <span>Barcode</span>
                             </a>
                         </li>
+                        <li class="sidebar-item <?= ($currentUri == 'home/member') ? 'active' : '' ?>">
+                            <a href="<?= base_url('home/member') ?>" class='sidebar-link'>
+                                <i class="fa fa-user"></i>
+                                <span>Member</span>
+                            </a>
+                        </li>
 
                         <!-- Pemesanan -->
 

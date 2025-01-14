@@ -3,7 +3,7 @@
         <div class="col-12 col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Tambah Barang</h4>
+                    <h4 class="card-title">Edit Barang</h4>
                 </div>
                 <div class="card-body">
                     <!-- Form Utama -->
@@ -18,15 +18,11 @@
                 </div>
                 <div class="col-md-7 mb-3">
                     <label for="kode_barang">Kode Barang:</label>
-                    <input type="text" class="form-control" name="kode_barang" value="<?= $oke->kode_barang ?>"  required>
+                    <input type="text" class="form-control" name="kode_barang" value="<?= $oke->kode_barang ?>"  readonly>
                 </div>
                 <div class="col-md-7 mb-3">
                     <label for="harga_barang">Harga Barang:</label>
                     <input type="text" class="form-control" name="harga_barang" value="<?= $oke->harga_barang ?>"  required>
-                </div>
-                <div class="col-md-7 mb-3">
-                    <label for="jumlah">Jumlah:</label>
-                    <input type="text" class="form-control" name="jumlah" value="<?= $oke->jumlah ?>"  required>
                 </div>
                 <div class="col-md-7 mb-3">
                     <label for="stok">Stok:</label>

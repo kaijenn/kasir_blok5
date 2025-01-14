@@ -116,7 +116,10 @@ public function join1($tabel1, $tabel2, $on)
             ->getResult();
     }
 
-    
+    public function cariBarangDariKode($kode_barang)
+    {
+        return $this->where('kode_barang', $kode_barang)->first(); // Mengambil satu data berdasarkan kode_barang
+    }
     public function getWhere($tabel,$where){
         return $this->db->table($tabel)
                         ->getwhere($where)
@@ -219,7 +222,41 @@ public function saveToBackup($table, $data)
         return $this->db->table($table)->insert($data);
     }
 
+    public function getLastNomorStruk()
+{
+    return $this->db->table('transaksi')
+        ->select('nomor_struk')
+        ->orderBy('id_transaksi', 'DESC') // Mengurutkan berdasarkan ID untuk mendapatkan yang terbaru
+        ->limit(1)
+        ->get()
+        ->getRow();
+}
 
+public function buatNomorStrukBaru()
+{
+    // Dapatkan transaksi terakhir
+    $lastTransaction = $this->getLastNomorStruk();
 
+    // Jika tidak ada transaksi sebelumnya, mulai dari 1
+    if (!$lastTransaction) {
+        return 'MNTP-00001'; // Format awal
+    }
+
+    // Ekstrak nomor urut terakhir
+    $lastNomorStruk = $lastTransaction->nomor_struk;
+    $lastNumber = (int)substr($lastNomorStruk, -5); // Ambil 5 digit terakhir
+    $newNumber = $lastNumber + 1;
+
+    // Buat nomor struk baru
+    return 'MNTP-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT); // Format baru
+}
+public function joinresult($pil,$tabel1,$on,$where)
+    {
+        return $this->db->table($pil)
+                        ->join($tabel1,$on,"right")
+                        ->getWhere($where)->getResult();
+                        // return $this->db->query('select * from brg_msk join barang on brg_msk.id_brg=barang.id_brg')
+                        // ->getResult();
+    }
 
 }
