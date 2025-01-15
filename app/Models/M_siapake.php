@@ -76,7 +76,6 @@ public function getJenisSuratOptions() {
     return $this->db->table('jenis_surat')->get()->getResultArray();
 }
 
-
 public function getDokumenById($id_dokumen) {
     return $this->db->table('dokumen')
                     ->join('jenis_surat', 'jenis_surat.id_jenis_surat = dokumen.id_jenis_surat', 'left')

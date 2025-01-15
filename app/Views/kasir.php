@@ -35,23 +35,17 @@
     <!-- Tombol untuk menambah ke transaksi -->
     <button type="button" class="btn btn-primary" id="tambah-transaksi" onclick="tambahTransaksi()">Tambah</button>
 
-    <!-- Form Member -->
+    <h5>Member</h5>
     <div class="form-group">
-        <label for="no_hp_member">Nomor Telepon</label>
-        <input type="text" class="form-control" id="no_hp_member" name="no_hp_member" placeholder="Masukkan Nomor Handphone" oninput="cariMember()">
+        <label for="email_member">Email Member:</label>
+        <input type="text" class="form-control" id="email_member" name="email_member" placeholder="Masukkan Email Member" >
+    </div>
+    <div class="form-group">
+        <label for="no_hp_member">Nomor Telepon Member:</label>
+        <input type="text" class="form-control" id="no_hp_member" name="no_hp_member" placeholder="Masukkan Nomor Telepon Member" >
     </div>
 
-    <div id="form-member" style="display: none;">
-        <h5>Detail Member</h5>
-        <div class="form-group">
-            <label for="nama_member">Nama Member</label>
-            <input type="text" class="form-control" id="nama_member" name="nama_member" placeholder="Nama Member" readonly>
-        </div>
-        <div class="form-group">
-            <label for="member_email">Email</label>
-            <input type="email" class="form-control" id="member_email" name="member_email" placeholder="Email" readonly>
-        </div>
-    </div>
+       
 
     <div class="card-footer">
         <div class="form-group">
@@ -70,6 +64,8 @@
         </div>
 
         <div class="d-flex justify-content-end">
+        <input type="hidden" name="id_member" value="1"> <!-- ID member -->
+
             <button type="submit" class="btn btn-info">Bayar</button>
         </div>
     </div>
@@ -192,11 +188,35 @@ function dapatkanNomorStruk() {
 
 // Event listener untuk form submit
 // Event listener untuk form submit
-document.querySelector('.btn-info').addEventListener('click', function(event) {
+document.querySelector('.btn-info').addEventListener('click', function (event) {
     event.preventDefault(); // Mencegah form submit default
 
-    // Pastikan nomor struk diproses
-    dapatkanNomorStruk();
+    // Ambil nilai email_member dan no_hp_member
+    const emailMember = document.getElementById("email_member").value.trim();
+    const noHpMember = document.getElementById("no_hp_member").value.trim();
+
+    // Cek apakah email_member dan no_hp_member kosong
+    if (emailMember === '' && noHpMember === '') {
+        // Jika kosong, kirim request untuk menampilkan nota langsung
+        const nomorStruk = document.getElementById("nomor_struk").value;
+
+        // Menggunakan fetch untuk mendapatkan response dari server
+        fetch('<?= base_url('home/printnota') ?>?nomor_struk=' + nomorStruk)
+            .then(response => {
+                if (response.ok) {
+                    // Jika response berhasil, buka PDF di tab baru
+                    window.open(response.url, '_blank');
+                } else {
+                    alert('Gagal mengunduh nota.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat memproses nota');
+            });
+
+        return; // Hentikan eksekusi lebih lanjut
+    }
 
     // Kumpulkan data untuk dikirim
     const formData = new FormData();
@@ -213,6 +233,8 @@ document.querySelector('.btn-info').addEventListener('click', function(event) {
     formData.append('bayar', document.getElementById("bayar").value.replace(/[^0-9]/g, ''));
     formData.append('kembalian', document.getElementById("kembalian").value.replace(/[^0-9]/g, ''));
     formData.append('nomor_struk', document.getElementById("nomor_struk").value);
+    formData.append('email_member', emailMember); // Ambil email member dari input form
+    formData.append('no_hp_member', noHpMember); // Ambil nomor HP member dari input form
 
     // Kirim data ke server
     fetch('<?= base_url('home/aksi_t_pemesanan') ?>', {
@@ -221,18 +243,20 @@ document.querySelector('.btn-info').addEventListener('click', function(event) {
     })
     .then(response => response.json())
     .then(data => {
-    if (data.status === 'success') {
-        // Redirect ke fungsi untuk menghasilkan PDF
-        window.location.href = '<?= base_url('home/printnota') ?>?nomor_struk=' + data.nomor_struk; // Ganti dengan URL yang sesuai
-    } else {
-        alert('Transaksi gagal: ' + data.message);
-    }
-})
+        if (data.status === 'success') {
+            alert('Nota berhasil dikirim ke email dan WhatsApp.');
+        } else {
+            alert('Transaksi gagal: ' + data.message);
+        }
+    })
     .catch(error => {
         console.error('Error:', error);
         alert('Terjadi kesalahan saat memproses transaksi');
     });
 });
+
+
+
 
 
 
