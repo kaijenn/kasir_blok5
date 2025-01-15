@@ -15,7 +15,8 @@
 		"psr/log": "^1.1",
 		"picqer/php-barcode-generator": "^2.4",
 		"dompdf/dompdf": "^3.0",
-		"tecnickcom/tcpdf": "^6.8"
+		"tecnickcom/tcpdf": "^6.8",
+		"phpmailer/phpmailer": "^6.9"
 	},
 	"require-dev": {
 		"codeigniter4/codeigniter4-standard": "^1.0",
